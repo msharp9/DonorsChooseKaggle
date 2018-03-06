@@ -1,0 +1,1 @@
+This is my code for the DonorsChoose Kaggle competition.  This is playground competition, but is interesting since there are prizes and appears to be for charity.  The data is all in csv files and contain teacher's essays you will use to predict if a project will be accepted.
