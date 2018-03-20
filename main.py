@@ -16,6 +16,7 @@ FILTER_DATE = datetime.datetime(2017,5,17,10,0,0,0)
 
 # pull in data
 df = pd.read_csv('train.csv')
+res = pd.read_csv('resources.csv')
 
 # Filter data due to question change
 print(df.shape)
@@ -34,6 +35,14 @@ for c in tqdm(cat_cols):
     df[c] = le.fit_transform(df[c].astype(str))
     # test[c] = le.transform(test[c].astype(str))
 print('Label Encoded Cols:', df[cat_cols].head(3))
+
+# Pull in price data:
+res = pd.DataFrame(res[['id', 'price']].groupby('id').price.agg(
+        ['sum', 'count', 'max', 'mean', 'std', lambda x: len(np.unique(x)),]
+    )).reset_index()
+print(res.head())
+df = df.merge(res, on='id', how='left')
+
 
 
 text_columns = ['project_title', 'project_essay_1', 'project_essay_2', 'project_essay_3', 'project_essay_4', 'project_resource_summary']
