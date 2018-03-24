@@ -51,12 +51,7 @@ print(res.head())
 df = df.merge(res, on='id', how='left')
 
 
-
-text_columns = ['project_title', 'project_essay_1', 'project_essay_2', 'project_essay_3', 'project_essay_4', 'project_resource_summary']
-print('Excerpt of the dataset', df[text_columns].head(3))
-
-
-
+#Setting up Text Analysis
 # clean data (remove punctuation and captilization)
 def preprocessor(text):
     # text = re.sub("'", '', text)
@@ -65,10 +60,35 @@ def preprocessor(text):
 
 # tokenize data (find stem, remove stopwords)
 porter = PorterStemmer()
-stop = stopwords.words('english')
 def tokenizer_porter(text):
-    stems = [porter.stem(word) for word in text.split() if word not in stop]
-    return ' '.join(stems)
+    return [porter.stem(word) for word in text.split()]
+
+stop = stopwords.words('english')
+# def tokenizer_porter(text):
+#     stems = [porter.stem(word) for word in text.split() if word not in stop]
+#     return stems
+#     # return ' '.join(stems)
+
+text_columns = ['project_title', 'project_essay_1', 'project_essay_2', 'project_resource_summary']
+n_features = [200,1000,1000,200]
+print('Excerpt of the dataset', df[text_columns].head(3))
+for i,c in tqdm(enumerate(text_columns)):
+    tfidf = TfidfVectorizer(max_features=n_features[i], stop_words=stop,
+        preprocessor=preprocessor, tokenizer=tokenizer_porter, norm='l2',
+    )
+    tfidf_train = np.array(tfidf.fit_transform(df[c]).toarray(), dtype=np.float16)
+
+    for j in range(n_features[i]):
+        df[c + '_tfidf_' + str(j)] = tfidf_train[:, i]
+
+    df[c + '_length'] = df[c].apply(lambda x: len(str(x)))
+    df[c + '_wc'] = df[c].apply(lambda x: len(str(x).split(' ')))
+
+drop_cols = ['id', 'teacher_id', 'project_essay_3', 'project_essay_4', *text_columns]
+X = df.drop(drop_cols, axis=1, errors='ignore')
+y = df['project_is_approved']
+print(x.head(), y.head())
+
 
 # # applying
 # for column in tqdm(text_columns):
