@@ -16,6 +16,7 @@ FILTER_DATE = datetime.datetime(2017,5,17,10,0,0,0)
 
 # pull in data
 df = pd.read_csv('train.csv')
+test = pd.read_csv('test.csv')
 res = pd.read_csv('resources.csv')
 
 # Filter data due to question change
@@ -25,6 +26,7 @@ print(df.shape)
 
 # Convert Dates to Int
 df['project_submitted_datetime'] = pd.to_datetime(df['project_submitted_datetime']).values.astype(np.int64)
+test['project_submitted_datetime'] = pd.to_datetime(test['project_submitted_datetime']).values.astype(np.int64)
 print('Dates:', df['project_submitted_datetime'].head(3))
 
 # Convert categortical data w/ label encoder
@@ -33,7 +35,7 @@ cat_cols = ['teacher_id', 'teacher_prefix', 'school_state', 'project_grade_categ
 for c in tqdm(cat_cols):
     le = LabelEncoder()
     df[c] = le.fit_transform(df[c].astype(str))
-    # test[c] = le.transform(test[c].astype(str))
+    test[c] = le.transform(test[c].astype(str))
 print('Label Encoded Cols:', df[cat_cols].head(3))
 
 # Pull in price data:
@@ -49,6 +51,7 @@ res.columns = ['_'.join(col) for col in res.columns]
 res.rename(columns={'id_': 'id'}, inplace=True)
 print(res.head())
 df = df.merge(res, on='id', how='left')
+test = test.merge(res, on='id', how='left')
 
 
 #Setting up Text Analysis
@@ -77,18 +80,29 @@ for i,c in tqdm(enumerate(text_columns)):
         preprocessor=preprocessor, tokenizer=tokenizer_porter, norm='l2',
     )
     tfidf_train = np.array(tfidf.fit_transform(df[c]).toarray(), dtype=np.float16)
+    tfidf_test = np.array(tfidf.transform(test[c]).toarray(), dtype=np.float16)
 
     for j in range(n_features[i]):
         df[c + '_tfidf_' + str(j)] = tfidf_train[:, i]
+        test[c + '_tfidf_' + str(j)] = tfidf_test[:, i]
 
     df[c + '_length'] = df[c].apply(lambda x: len(str(x)))
     df[c + '_wc'] = df[c].apply(lambda x: len(str(x).split(' ')))
+    test[c + '_length'] = test[c].apply(lambda x: len(str(x)))
+    test[c + '_wc'] = test[c].apply(lambda x: len(str(x).split(' ')))
 
 drop_cols = ['id', 'teacher_id', 'project_essay_3', 'project_essay_4', *text_columns]
-X = df.drop(drop_cols, axis=1, errors='ignore')
+X = df.drop(drop_cols, axis=1, errors='ignore', inplace=True)
 y = df['project_is_approved']
-print(x.head(), y.head())
+Xt = test.drop(drop_cols, axis=1, errors='ignore', inplace=True)
+yt = test['project_is_approved']
+print(X.head(), y.head())
+print(Xt.head(), yt.head())
 
+
+# Save preprocessing
+df.to_csv('train_pre.csv')
+test.to_csv('test_pre.csv')
 
 # # applying
 # for column in tqdm(text_columns):
