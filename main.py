@@ -31,10 +31,13 @@ print('Dates:', df['project_submitted_datetime'].head(3))
 
 # Convert categortical data w/ label encoder
 print('Label Encoder...')
-cat_cols = ['teacher_id', 'teacher_prefix', 'school_state', 'project_grade_category', 'project_subject_categories', 'project_subject_subcategories']
+cat_cols = ['teacher_prefix', 'school_state', 'project_grade_category', 'project_subject_categories', 'project_subject_subcategories']
 for c in tqdm(cat_cols):
     le = LabelEncoder()
-    df[c] = le.fit_transform(df[c].astype(str))
+    series = np.array(pd.concat([df[c], test[c]], axis=0).astype(str))
+    le.fit(series)
+    print(le.classes_)
+    df[c] = le.transform(df[c].astype(str))
     test[c] = le.transform(test[c].astype(str))
 print('Label Encoded Cols:', df[cat_cols].head(3))
 
@@ -81,10 +84,12 @@ for i,c in tqdm(enumerate(text_columns)):
     )
     tfidf_train = np.array(tfidf.fit_transform(df[c]).toarray(), dtype=np.float16)
     tfidf_test = np.array(tfidf.transform(test[c]).toarray(), dtype=np.float16)
+    print(tfidf.vocabulary_)
+    vocab = {v: k for k, v in tfidf.vocabulary_.items()}
 
     for j in range(n_features[i]):
-        df[c + '_tfidf_' + str(j)] = tfidf_train[:, i]
-        test[c + '_tfidf_' + str(j)] = tfidf_test[:, i]
+        df[c + '_tfidf_' + vocab[j]] = tfidf_train[:, i]
+        test[c + '_tfidf_' + vocab[j]] = tfidf_test[:, i]
 
     df[c + '_length'] = df[c].apply(lambda x: len(str(x)))
     df[c + '_wc'] = df[c].apply(lambda x: len(str(x).split(' ')))
@@ -92,17 +97,16 @@ for i,c in tqdm(enumerate(text_columns)):
     test[c + '_wc'] = test[c].apply(lambda x: len(str(x).split(' ')))
 
 drop_cols = ['id', 'teacher_id', 'project_essay_3', 'project_essay_4', *text_columns]
-X = df.drop(drop_cols, axis=1, errors='ignore', inplace=True)
-y = df['project_is_approved']
-Xt = test.drop(drop_cols, axis=1, errors='ignore', inplace=True)
-yt = test['project_is_approved']
-print(X.head(), y.head())
-print(Xt.head(), yt.head())
-
+df.drop(drop_cols, axis=1, errors='ignore', inplace=True)
+# y = df['project_is_approved']
+test.drop(drop_cols, axis=1, errors='ignore', inplace=True)
+print(df.head())
+print(test.head())
 
 # Save preprocessing
 df.to_csv('train_pre.csv')
 test.to_csv('test_pre.csv')
+
 
 # # applying
 # for column in tqdm(text_columns):
