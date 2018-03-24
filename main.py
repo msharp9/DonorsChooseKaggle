@@ -37,9 +37,16 @@ for c in tqdm(cat_cols):
 print('Label Encoded Cols:', df[cat_cols].head(3))
 
 # Pull in price data:
-res = pd.DataFrame(res[['id', 'price']].groupby('id').price.agg(
-        ['sum', 'count', 'max', 'mean', 'std', lambda x: len(np.unique(x)),]
+res['total_price'] = res['quantity']*res['price']
+res = pd.DataFrame(res[['id', 'quantity', 'price', 'total_price']].groupby('id').agg(
+        {
+            'quantity': ['sum', 'mean', 'std', lambda x: len(np.unique(x)),]
+            ,'price': ['count', 'max', 'min', 'mean', 'std', lambda x: len(np.unique(x)),]
+            ,'total_price': ['sum', 'max',]
+        }
     )).reset_index()
+res.columns = ['_'.join(col) for col in res.columns]
+res.rename(columns={'id_': 'id'}, inplace=True)
 print(res.head())
 df = df.merge(res, on='id', how='left')
 
