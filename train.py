@@ -86,4 +86,4 @@ print('CV accuracy: %.3f +/- %.3f' % (np.mean(scores), np.std(scores)))
 # # plt.savefig('./figures/confusion_matrix.png', dpi=300)
 # plt.show()
 
-pickle.dump(clf, open('classifier.pkl', 'wb'))
+pickle.dump(clf, open('classifier_acc_{:.3f}.pkl'.format(np.mean(scores)), 'wb'))
