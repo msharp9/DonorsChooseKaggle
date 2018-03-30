@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 import pickle
 
-CLASSIFIER = 'classifier_acc_.846.pkl'
+CLASSIFIER = 'classifier_acc_0.846.pkl'
 
 # pull in data
 df = pd.read_csv('test_pre.csv')
@@ -25,4 +25,4 @@ print(preds.shape, preds)
 subm = pd.DataFrame()
 # subm['id'] = id_test --oops I dropped these
 subm['project_is_approved'] = preds[:,1]
-subm.to_csv('submission.csv', index=False)
+subm.to_csv('submission3.csv', index=False)

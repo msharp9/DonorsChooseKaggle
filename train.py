@@ -35,7 +35,7 @@ X_test_std = sc.transform(X_test)
 
 #logistic regression:
 # clf = LogisticRegression(C=100.0, random_state=0, penalty='l1', n_jobs=1)
-clf = LogisticRegression(solver="sag", max_iter=200)
+clf = LogisticRegression(C=0.01, solver="sag", max_iter=400)
 clf.fit(X_train_std, y_train)
 
 # clf = SGDClassifier(loss='log', random_state=1, n_iter=1)
