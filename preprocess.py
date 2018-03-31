@@ -27,6 +27,9 @@ print(df.shape)
 # Convert Dates to Int
 df['project_submitted_datetime'] = pd.to_datetime(df['project_submitted_datetime']).values.astype(np.int64)
 test['project_submitted_datetime'] = pd.to_datetime(test['project_submitted_datetime']).values.astype(np.int64)
+# normalizing so this doesn't have such a high weight
+df['project_submitted_datetime'] = df['project_submitted_datetime'].apply(lambda x: x/df['project_submitted_datetime'].max())
+test['project_submitted_datetime'] = test['project_submitted_datetime'].apply(lambda x: x/df['project_submitted_datetime'].max())
 print('Dates:', df['project_submitted_datetime'].head(3))
 
 # Convert categortical data w/ label encoder
@@ -45,9 +48,9 @@ print('Label Encoded Cols:', df[cat_cols].head(3))
 res['total_price'] = res['quantity']*res['price']
 res = pd.DataFrame(res[['id', 'quantity', 'price', 'total_price']].groupby('id').agg(
         {
-            'quantity': ['sum', 'mean', 'std', lambda x: len(np.unique(x)),]
-            ,'price': ['count', 'max', 'min', 'mean', 'std', lambda x: len(np.unique(x)),]
-            ,'total_price': ['sum', 'max',]
+            'quantity': ['sum', 'mean',]# 'std', lambda x: len(np.unique(x)),]
+            ,'price': ['count', 'max', 'min', 'mean', lambda x: len(np.unique(x)),]
+            ,'total_price': ['sum', 'max', 'min', 'mean',]
         }
     )).reset_index()
 res.columns = ['_'.join(col) for col in res.columns]
@@ -57,7 +60,9 @@ df = df.merge(res, on='id', how='left')
 test = test.merge(res, on='id', how='left')
 
 
+
 #Setting up Text Analysis
+df_all = pd.concat([df, test], axis=0)
 # clean data (remove punctuation and captilization)
 def preprocessor(text):
     # text = re.sub("'", '', text)
@@ -76,20 +81,21 @@ stop = stopwords.words('english')
 #     # return ' '.join(stems)
 
 text_columns = ['project_title', 'project_essay_1', 'project_essay_2', 'project_resource_summary']
-n_features = [200,1000,1000,200]
+n_features = [500,2500,2500,500]
 print('Excerpt of the dataset', df[text_columns].head(3))
 for i,c in tqdm(enumerate(text_columns)):
     tfidf = TfidfVectorizer(max_features=n_features[i], stop_words=stop,
         preprocessor=preprocessor, tokenizer=tokenizer_porter, norm='l2',
     )
-    tfidf_train = np.array(tfidf.fit_transform(df[c]).toarray(), dtype=np.float16)
+    tfidf.fit(df_all[c])
+    tfidf_train = np.array(tfidf.transform(df[c]).toarray(), dtype=np.float16)
     tfidf_test = np.array(tfidf.transform(test[c]).toarray(), dtype=np.float16)
     print(tfidf.vocabulary_)
     vocab = {v: k for k, v in tfidf.vocabulary_.items()}
 
     for j in range(n_features[i]):
-        df[c + '_tfidf_' + vocab[j]] = tfidf_train[:, i]
-        test[c + '_tfidf_' + vocab[j]] = tfidf_test[:, i]
+        df[c + '_tfidf_' + vocab[j]] = tfidf_train[:, j]
+        test[c + '_tfidf_' + vocab[j]] = tfidf_test[:, j]
 
     df[c + '_length'] = df[c].apply(lambda x: len(str(x)))
     df[c + '_wc'] = df[c].apply(lambda x: len(str(x).split(' ')))
@@ -104,8 +110,8 @@ print(df.head())
 print(test.head())
 
 # Save preprocessing
-df.to_csv('train_pre.csv')
-test.to_csv('test_pre.csv')
+df.to_csv('train_pre.csv', index=False)
+test.to_csv('test_pre.csv', index=False)
 
 
 # # applying
