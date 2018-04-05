@@ -4,3 +4,6 @@ Created first submission with score of 0.69294 which got me rank 200/314. (0.821
 
 Update:
 Found error in my preprocess script in the text analysis.  Data wasn't being added to csv correctly.  None of the text columns were showing as significant in analysis. Correcting this boosted results by 0.1.  Also experimenting with kfolds, boosted trees, different C values in regression model, ect.
+
+Update:
+Created a NN model as my next choice.  Decided to use tflearn to gain more experience with it, as it is pretty simple to set up.  Looks like there isn't a way to predict probabilities yet with this frame work.  Will need to fall back to keras.  Also created a lighter preprocessed dataset with less features for faster learning.

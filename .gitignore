@@ -1,2 +1,5 @@
 *.csv
 *.pkl
+log
+*.model*
+checkpoint

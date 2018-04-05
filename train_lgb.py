@@ -14,18 +14,18 @@ import gc
 # pull in data
 df = pd.read_csv('train_pre.csv')
 df = df.fillna(0) # std deviation columns for one item prices/counts
-print(df.head(), df.shape)
+# print(df.head(), df.shape)
 
-X = df.drop(['Unnamed: 0','project_is_approved'], axis=1, errors='ignore')
+X = df.drop(['project_is_approved'], axis=1, errors='ignore')
 y = df['project_is_approved']
 feature_names = list(X.columns)
 
 # pull in test data
 df = pd.read_csv('test_pre.csv')
-df = df.fillna(0) # std deviation columns for one item prices/counts
+X_test = df.fillna(0) # std deviation columns for one item prices/counts
 # print(df.head(), df.shape)
 
-X_test = df.drop(['Unnamed: 0'], axis=1, errors='ignore')
+# X_test = df.drop(['Unnamed: 0'], axis=1, errors='ignore')
 
 df = pd.read_csv('test.csv')
 ids = df['id'].values
@@ -37,7 +37,7 @@ gc.collect()
 # Build the model
 cnt = 0
 p_buf = []
-n_splits = 5
+n_splits = 4
 n_repeats = 1
 kf = RepeatedKFold(
     n_splits=n_splits,
@@ -51,11 +51,11 @@ for train_index, valid_index in kf.split(X):
         'boosting': 'gbdt',
         'objective': 'binary',
         'metric': 'auc',
-        'max_depth': 14,
-        'num_leaves': 31,
-        'learning_rate': 0.025,
-        'feature_fraction': 0.85,
-        'bagging_fraction': 0.85,
+        'num_leaves': 64,
+        'max_depth': 6,
+        'learning_rate': 0.01,
+        'feature_fraction': 0.5,
+        'bagging_fraction': 0.5,
         'bagging_freq': 5,
         'verbose': 0,
         'num_threads': 1,
@@ -110,8 +110,8 @@ for train_index, valid_index in kf.split(X):
     auc_buf.append(auc)
 
     cnt += 1
-    if cnt > 0: # Comment this to run several folds
-        break
+    # if cnt > 0: # Comment this to run several folds
+    #     break
 
     del model, lgb_train, lgb_valid, p
     gc.collect
@@ -127,4 +127,4 @@ preds = p_buf/cnt
 subm = pd.DataFrame()
 subm['id'] = ids
 subm['project_is_approved'] = preds
-subm.to_csv('lgb_submission2.csv', index=False)
+subm.to_csv('lgb_submission3.csv', index=False)

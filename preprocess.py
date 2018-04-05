@@ -81,7 +81,7 @@ stop = stopwords.words('english')
 #     # return ' '.join(stems)
 
 text_columns = ['project_title', 'project_essay_1', 'project_essay_2', 'project_resource_summary']
-n_features = [500,2500,2500,500]
+n_features = [100,500,500,100]
 print('Excerpt of the dataset', df[text_columns].head(3))
 for i,c in tqdm(enumerate(text_columns)):
     tfidf = TfidfVectorizer(max_features=n_features[i], stop_words=stop,
@@ -110,8 +110,8 @@ print(df.head())
 print(test.head())
 
 # Save preprocessing
-df.to_csv('train_pre.csv', index=False)
-test.to_csv('test_pre.csv', index=False)
+df.to_csv('train_pre2.csv', index=False)
+test.to_csv('test_pre2.csv', index=False)
 
 
 # # applying
