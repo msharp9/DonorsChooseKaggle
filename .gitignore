@@ -3,3 +3,4 @@
 log
 *.model*
 checkpoint
+__pycache__

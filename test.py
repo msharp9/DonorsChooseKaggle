@@ -94,3 +94,28 @@ import re
 
 scores = [10,20.5,30.1]
 print('classifier_acc_{:.3f}_{:.3f}.pkl'.format(np.mean(scores),np.std(scores)))
+
+
+
+
+from keras.models import Sequential
+from keras.layers.core import Dropout
+from keras.layers.core import Activation
+from keras.layers.core import Dense
+# For a single-input model with 2 classes (binary classification):
+
+model = Sequential()
+model.add(Dense(32, activation='relu', input_dim=100))
+model.add(Dense(1, activation='sigmoid'))
+model.compile(optimizer='rmsprop',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+# Generate dummy data
+import numpy as np
+data = np.random.random((1000, 100))
+labels = np.random.randint(2, size=(1000, 1))
+
+print(data,labels,data.shape,labels.shape)
+# Train the model, iterating on the data in batches of 32 samples
+model.fit(data, labels, epochs=10, batch_size=32)
