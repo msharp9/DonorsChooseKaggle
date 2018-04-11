@@ -7,3 +7,6 @@ Found error in my preprocess script in the text analysis.  Data wasn't being add
 
 Update:
 Created a NN model as my next choice.  Decided to use tflearn to gain more experience with it, as it is pretty simple to set up.  Looks like there isn't a way to predict probabilities yet with this frame work.  Will need to fall back to keras.  Also created a lighter preprocessed dataset with less features for faster learning.
+
+Update:
+Keras model seems to train well, but all NNs I build end up only predicting all 0's or 1's.  Felt like I was overfitting, so reducing learning rate, creating a smaller NN structure, added batch normalization, and added class weights.  All these greatly improved training and validation curves, but no changes to predictions.  Feel like I'm missing something here.

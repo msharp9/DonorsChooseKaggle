@@ -15,7 +15,7 @@ ids = df['id'].values
 del df
 gc.collect()
 
-model = models.load_model("classifiers/classifier_nn.model")
+model = models.load_model("classifiers/classifier_nn2.model")
 preds = model.predict(X)
 
 print(preds.shape, preds)
@@ -24,4 +24,4 @@ print(preds.shape, preds)
 subm = pd.DataFrame()
 subm['id'] = ids
 subm['project_is_approved'] = preds[:,1]
-subm.to_csv('submissions/submission_nn.csv', index=False)
+subm.to_csv('submissions/submission_nn2.csv', index=False)
