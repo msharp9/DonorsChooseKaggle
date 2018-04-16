@@ -13,6 +13,8 @@ from keras.layers.core import Dropout
 from keras.layers.core import Activation
 from keras.layers.core import Dense
 from keras.optimizers import SGD
+from keras import backend as K
+import tensorflow as tf
 import pickle
 import os
 import gc
@@ -28,19 +30,19 @@ class simpleNN:
         model.add(BatchNormalization())
         model.add(Dropout(0.5))
 
-        # model.add(Dense(D//2))
-        # model.add(Activation("relu"))
-        # model.add(BatchNormalization())
-        # model.add(Dropout(0.5))
-        #
-        # model.add(Dense(D//4))
-        # model.add(Activation("relu"))
-        # model.add(BatchNormalization())
-        # model.add(Dropout(0.5))
+        model.add(Dense(D//2))
+        model.add(Activation("relu"))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
+
+        model.add(Dense(D//4))
+        model.add(Activation("relu"))
+        model.add(BatchNormalization())
+        model.add(Dropout(0.5))
 
         # add a softmax layer
-        model.add(Dense(classes))
-        model.add(Activation("softmax"))
+        model.add(Dense(1, activation='sigmoid'))
+        # model.add(Activation("softmax"))
 
         # return the model
         return model
@@ -53,9 +55,9 @@ df = df.fillna(0) # std deviation columns for one item prices/counts
 
 X = df.drop(['project_is_approved'], axis=1, errors='ignore').values
 y = df['project_is_approved'].values.reshape(-1,1)
-ohe = OneHotEncoder()
-ohe.fit(y)
-y = ohe.transform(y).toarray()
+# ohe = OneHotEncoder()
+# ohe.fit(y)
+# y = ohe.transform(y).toarray()
 
 del df
 gc.collect()
@@ -71,7 +73,34 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # Build and train the model
 print("[INFO] training model...")
-model = simpleNN.build(32, X.shape[1], 2)
+# AUC for a binary classifier
+def auc(y_true, y_pred):
+    ptas = tf.stack([binary_PTA(y_true,y_pred,k) for k in np.linspace(0, 1, 1000)],axis=0)
+    pfas = tf.stack([binary_PFA(y_true,y_pred,k) for k in np.linspace(0, 1, 1000)],axis=0)
+    pfas = tf.concat([tf.ones((1,)) ,pfas],axis=0)
+    binSizes = -(pfas[1:]-pfas[:-1])
+    s = ptas*binSizes
+    return K.sum(s, axis=0)
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+# PFA, prob false alert for binary classifier
+def binary_PFA(y_true, y_pred, threshold=K.variable(value=0.5)):
+    y_pred = K.cast(y_pred >= threshold, 'float32')
+    # N = total number of negative labels
+    N = K.sum(1 - y_true)
+    # FP = total number of false alerts, alerts from the negative class labels
+    FP = K.sum(y_pred - y_pred * y_true)
+    return FP/N
+#-----------------------------------------------------------------------------------------------------------------------------------------------------
+# P_TA prob true alerts for binary classifier
+def binary_PTA(y_true, y_pred, threshold=K.variable(value=0.5)):
+    y_pred = K.cast(y_pred >= threshold, 'float32')
+    # P = total number of positive labels
+    P = K.sum(y_true)
+    # TP = total number of correct alerts, alerts from the positive class labels
+    TP = K.sum(y_pred * y_true)
+    return TP/P
+
+model = simpleNN.build(16, X.shape[1], 2)
 opt = SGD(lr=0.0001)
 model.compile(optimizer=opt,
     loss='binary_crossentropy',
